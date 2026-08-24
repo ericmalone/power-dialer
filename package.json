@@ -1,0 +1,32 @@
+{
+  "name": "power-dialer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-line power dialer for Twilio. Agents dial up to 5 numbers at once from a spreadsheet with one button.",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node tests/smoke.test.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.5.0",
+    "connect-sqlite3": "^0.9.15",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "multer": "^2.2.0",
+    "socket.io": "^4.8.1",
+    "twilio": "^5.3.5",
+    "xlsx": "^0.18.5"
+  }
+}

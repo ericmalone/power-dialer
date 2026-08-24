@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dialer</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%93%9E</text></svg>" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot" id="brandDot"></span> Power Dialer</div>
+  <span class="pill" id="phonePill"><span class="dot"></span> Phone: not connected</span>
+  <span class="pill" id="statusPill"><span class="dot"></span> Offline</span>
+  <a href="/crm" class="small">Merchants</a>
+  <a href="/reports" class="small">Reports</a>
+  <button id="btnTexts">Texts<span class="badge hidden" id="unreadBadge">0</span></button>
+  <span class="muted small" id="whoami"></span>
+  <button class="btn-ghost" id="logout">Sign out</button>
+</div>
+
+<div class="wrap">
+  <div id="alert" class="banner warn hidden"></div>
+
+  <div class="grid cols-3">
+
+    <!-- ------------------------------ CONTROLS ------------------------------ -->
+    <div>
+      <div class="card">
+        <h2>Session</h2>
+
+        <label for="listSel">Call list</label>
+        <select id="listSel"></select>
+
+        <label>Lines at once</label>
+        <div class="line-picker" id="linePicker"></div>
+        <p class="small muted" style="margin:8px 0 0">
+          More lines means faster connects, but if two people answer at the same moment
+          one of them gets the recorded apology. Start at 2&ndash;3.
+        </p>
+
+        <div class="mt">
+          <button class="big-btn" id="btnStart">START DIALING</button>
+          <button class="big-btn pause hidden" id="btnPause">PAUSE / BREAK</button>
+          <button class="big-btn hidden" id="btnResume">RESUME DIALING</button>
+          <button class="big-btn stop hidden" id="btnStop">END SESSION</button>
+        </div>
+
+        <p class="small muted mt" id="hint">
+          Press <b>Space</b> to pause or resume. Number keys pick a disposition.
+        </p>
+      </div>
+
+      <div class="card mt">
+        <h2>Today</h2>
+        <div class="stats">
+          <div class="stat"><div class="n" id="sCalls">0</div><div class="l">Dials</div></div>
+          <div class="stat"><div class="n" id="sConnects">0</div><div class="l">Connects</div></div>
+          <div class="stat"><div class="n" id="sTalk">0:00</div><div class="l">Talk time</div></div>
+          <div class="stat"><div class="n" id="sRate">0%</div><div class="l">Contact rate</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ------------------------------ STAGE ------------------------------ -->
+    <div>
+      <div class="card">
+        <h2>Live call</h2>
+        <div class="stage" id="stage">
+          <div class="who">Ready when you are</div>
+          <div class="sub">Pick a list, choose your lines, then hit START DIALING.</div>
+        </div>
+
+        <div class="row mt" id="callActions" style="display:none">
+          <button class="btn-danger" id="btnHangup">Hang up</button>
+          <button id="btnMute">Mute</button>
+          <button id="btnTextLead">Text them</button>
+          <div class="spacer"></div>
+          <button id="btnDnc" class="btn-ghost">Add to Do Not Call</button>
+        </div>
+      </div>
+
+      <div class="card mt" id="aiCard" style="display:none">
+        <h2>AI note</h2>
+        <div id="aiNoteBox"></div>
+      </div>
+
+      <div class="card mt" id="dispCard" style="display:none">
+        <h2>How did that go?</h2>
+        <div class="disp-grid" id="dispGrid"></div>
+        <label for="dispNotes">Notes</label>
+        <textarea id="dispNotes" rows="3" placeholder="Anything worth remembering..."></textarea>
+        <div class="row mt" id="quickTextRow">
+          <span class="small muted">Quick text:</span>
+          <span class="chips" id="quickTexts"></span>
+        </div>
+        <div class="row mt">
+          <button id="btnSkipDisp" class="btn-ghost">Skip &amp; keep dialing</button>
+          <div class="spacer"></div>
+          <span class="small muted" id="dispHint"></span>
+        </div>
+      </div>
+
+      <div class="card mt">
+        <h2>Lead details</h2>
+        <div id="leadDetails" class="small muted">No lead on screen yet.</div>
+      </div>
+    </div>
+
+    <!-- ------------------------------ LINES ------------------------------ -->
+    <div>
+      <div class="card">
+        <h2>Lines</h2>
+        <div class="lines" id="lines"></div>
+      </div>
+
+      <div class="card mt">
+        <h2>Text replies</h2>
+        <div id="replies" class="small muted">No replies yet.</div>
+      </div>
+
+      <div class="card mt">
+        <h2>Callbacks due</h2>
+        <div id="callbacks" class="small muted">None yet.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="modalHost"></div>
+<div id="toasts"></div>
+
+<script src="https://sdk.twilio.com/js/voice/releases/2.12.0/twilio.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/texting.js"></script>
+<script src="/js/agent.js"></script>
+</body>
+</html>

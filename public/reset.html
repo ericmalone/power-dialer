@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Set a new password</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%93%9E</text></svg>" />
+</head>
+<body>
+<div class="login-shell">
+  <form class="card login-card" id="form">
+    <h1>Set a new password</h1>
+    <p class="muted small" id="who">Checking your link...</p>
+
+    <div id="err" class="banner bad hidden"></div>
+
+    <div id="fields" class="hidden">
+      <label for="password">New password</label>
+      <input id="password" type="password" autocomplete="new-password" required minlength="10" autofocus />
+
+      <label for="confirm">Type it again</label>
+      <input id="confirm" type="password" autocomplete="new-password" required minlength="10" />
+      <p class="small muted" style="margin:6px 0 0">At least 10 characters.</p>
+
+      <button class="btn-primary mt" type="submit" style="width:100%;padding:12px">Save and sign in</button>
+    </div>
+
+    <p class="small mt" style="text-align:center"><a href="/forgot">Send me a new link</a> &middot; <a href="/login">Sign in</a></p>
+  </form>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const token = new URLSearchParams(location.search).get('token') || '';
+
+function fail(msg) {
+  $('who').textContent = '';
+  $('err').textContent = msg;
+  $('err').classList.remove('hidden');
+  $('fields').classList.add('hidden');
+}
+
+fetch(`/reset/check?token=${encodeURIComponent(token)}`)
+  .then(async (r) => {
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return fail(data.error || 'That link is not valid.');
+    $('who').textContent = `Setting a new password for ${data.email}.`;
+    $('fields').classList.remove('hidden');
+  })
+  .catch(() => fail('Could not check that link. Try again.'));
+
+$('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('err').classList.add('hidden');
+  if ($('password').value !== $('confirm').value) {
+    $('err').textContent = 'Those two passwords are not the same.';
+    $('err').classList.remove('hidden');
+    return;
+  }
+  const res = await fetch('/reset', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password: $('password').value }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    $('err').textContent = data.error || 'Could not set that password.';
+    $('err').classList.remove('hidden');
+    return;
+  }
+  location.href = data.redirect || '/';
+});
+</script>
+</body>
+</html>

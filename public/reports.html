@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dialing Reports</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%93%8A</text></svg>" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> Reports</div>
+  <a href="/" class="small">Dialer</a>
+  <a href="/crm" class="small">Merchants</a>
+  <a href="/admin" class="small hidden" id="adminLink">Admin</a>
+  <span class="muted small" id="whoami"></span>
+  <button class="btn-ghost" id="logout">Sign out</button>
+</div>
+
+<div class="wrap">
+
+  <!-- FILTERS -->
+  <div class="card">
+    <div class="searchbar">
+      <select id="fPreset"></select>
+      <span id="customRange" class="row hidden" style="gap:6px">
+        <input type="date" id="fFrom" style="max-width:165px" />
+        <span class="muted small">to</span>
+        <input type="date" id="fTo" style="max-width:165px" />
+      </span>
+      <select id="fGroup"></select>
+      <select id="fList"></select>
+      <select id="fAgent" class="hidden"></select>
+      <div class="spacer"></div>
+      <span class="small muted" id="rangeNote"></span>
+      <a class="btn small" id="btnExport" href="#">Download Excel</a>
+    </div>
+  </div>
+
+  <!-- HEADLINE -->
+  <div class="card mt">
+    <div class="chart-head"><h2>Dialing</h2></div>
+    <div class="tiles">
+      <div class="stat"><div class="n" id="kDials">0</div><div class="l">Dials</div><div id="dDials"></div></div>
+      <div class="stat"><div class="n" id="kConnects">0</div><div class="l">Connects</div><div id="dConnects"></div></div>
+      <div class="stat"><div class="n" id="kRate">0%</div><div class="l">Contact rate</div><div id="dRate"></div></div>
+      <div class="stat"><div class="n" id="kMerchants">0</div><div class="l">Merchants reached</div></div>
+      <div class="stat"><div class="n" id="kVoicemail">0</div><div class="l">Voicemails</div></div>
+      <div class="stat"><div class="n" id="kNoAnswer">0</div><div class="l">No answer</div></div>
+    </div>
+
+    <div class="chart-head mt"><h2>Talk time</h2></div>
+    <div class="tiles">
+      <div class="stat"><div class="n" id="kTalk">0:00</div><div class="l">Total talk time</div><div id="dTalk"></div></div>
+      <div class="stat"><div class="n" id="kAvg">0:00</div><div class="l">Average per connect</div><div id="dAvg"></div></div>
+      <div class="stat"><div class="n" id="kLongest">0:00</div><div class="l">Longest call</div></div>
+      <div class="stat"><div class="n small" id="kOnDialer">0h</div><div class="l">Hours on the dialer</div></div>
+      <div class="stat"><div class="n small" id="kTalkPerHour">-</div><div class="l">Talk per hour dialing</div></div>
+      <div class="stat"><div class="n small" id="kUtil">-</div><div class="l">Share of that spent talking</div></div>
+    </div>
+  </div>
+
+  <!-- OVER TIME -->
+  <div class="card mt">
+    <div class="chart-head"><h2 id="titleActivity">Dials and connects by day</h2></div>
+    <p class="chart-note">Each column is every number dialed. The filled part is the ones a real person picked up.</p>
+    <div class="legend">
+      <span class="key"><span class="sw" style="background:#3987e5"></span> Connected</span>
+      <span class="key"><span class="sw" style="background:#39424f"></span> No contact</span>
+    </div>
+    <div class="viz" id="vizActivity"></div>
+  </div>
+
+  <div class="card mt">
+    <div class="chart-head"><h2 id="titleTalk">Talk time by day</h2></div>
+    <p class="chart-note">Minutes spent in live conversation.</p>
+    <div class="viz" id="vizTalk"></div>
+  </div>
+
+  <div class="grid cols-2 mt">
+    <div class="card">
+      <div class="chart-head"><h2>How long the conversations ran</h2></div>
+      <p class="chart-note">Connected calls only.</p>
+      <div class="bar-rows" id="spread"></div>
+    </div>
+
+    <div class="card">
+      <div class="chart-head"><h2>What the calls turned into</h2></div>
+      <p class="chart-note">Dispositions on connected calls.</p>
+      <div class="bar-rows" id="dispositions"></div>
+    </div>
+  </div>
+
+  <!-- FOLLOW-UP -->
+  <div class="card mt">
+    <div class="chart-head"><h2>Follow-up in the same period</h2></div>
+    <div class="tiles">
+      <div class="stat"><div class="n" id="kTexts">0</div><div class="l">Texts sent</div></div>
+      <div class="stat"><div class="n" id="kReplies">0</div><div class="l">Replies</div></div>
+      <div class="stat"><div class="n" id="kCbBooked">0</div><div class="l">Callbacks booked</div></div>
+      <div class="stat"><div class="n" id="kCbDone">0</div><div class="l">Callbacks kept</div></div>
+      <div class="stat"><div class="n" id="kCbMissed">0</div><div class="l">Callbacks missed</div></div>
+      <div class="stat"><div class="n" id="kFunded">0</div><div class="l">Deals funded</div></div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="card mt hidden" id="boardCard">
+    <div class="chart-head"><h2>The floor</h2></div>
+    <p class="chart-note">Everyone's numbers over the same range, sorted by talk time.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Person</th><th>Dials</th><th>Connects</th><th>Contact rate</th><th>Talk time</th><th>Avg per connect</th><th>Longest</th></tr></thead>
+        <tbody id="boardRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div class="card mt">
+    <div class="row">
+      <div class="chart-head" style="margin:0"><h2>The numbers behind the charts</h2></div>
+      <div class="spacer"></div>
+      <button class="small" id="btnToggleTable">Show table</button>
+      <button class="small" id="btnToggleCalls">Show every call</button>
+    </div>
+    <div id="tableView" class="table-scroll mt hidden"></div>
+    <div id="callsView" class="table-scroll mt hidden"></div>
+  </div>
+
+</div>
+
+<div id="toasts"></div>
+
+<script src="/js/reports.js"></script>
+</body>
+</html>

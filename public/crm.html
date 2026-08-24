@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Merchants</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%97%82%EF%B8%8F</text></svg>" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> Merchants</div>
+  <a href="/" class="small">Dialer</a>
+  <a href="/reports" class="small">Reports</a>
+  <a href="/admin" class="small hidden" id="adminLink">Admin</a>
+  <span class="pill" id="duePill"><span class="dot"></span> 0 callbacks due</span>
+  <span class="muted small" id="whoami"></span>
+  <button class="btn-ghost" id="logout">Sign out</button>
+</div>
+
+<div class="wrap">
+  <div class="tabs" id="tabs">
+    <button data-tab="day" class="on">My day</button>
+    <button data-tab="merchants">Merchants</button>
+    <button data-tab="pipeline">Pipeline</button>
+    <button data-tab="notes">AI notes</button>
+  </div>
+
+  <!-- MY DAY -->
+  <section data-panel="day">
+    <div class="crm-grid">
+      <div>
+        <div class="card">
+          <h2>Today</h2>
+          <div class="stats">
+            <div class="stat"><div class="n" id="dDials">0</div><div class="l">Dials</div></div>
+            <div class="stat"><div class="n" id="dConnects">0</div><div class="l">Connects</div></div>
+            <div class="stat"><div class="n" id="dTalk">0:00</div><div class="l">Talk time</div></div>
+            <div class="stat"><div class="n" id="dCallbacks">0</div><div class="l">Callbacks open</div></div>
+          </div>
+        </div>
+        <div class="card mt">
+          <h2>My pipeline</h2>
+          <div id="dPipeline" class="small muted">Nothing open yet.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Callbacks</h2>
+          <div id="taskList" class="small muted">Nothing scheduled.</div>
+          <div class="row mt">
+            <button id="btnNewTask" class="small">Schedule something</button>
+          </div>
+        </div>
+
+        <div class="card mt">
+          <h2>Latest AI notes</h2>
+          <div id="dayNotes" class="small muted">No notes yet.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MERCHANTS -->
+  <section data-panel="merchants" class="hidden">
+    <div class="card">
+      <div class="searchbar">
+        <input id="q" placeholder="Search business, owner, phone, email..." />
+        <select id="fStage"></select>
+        <select id="fOwner"></select>
+        <select id="fSort">
+          <option value="recent">Most recent contact</option>
+          <option value="value">Biggest deal</option>
+          <option value="stage">By stage</option>
+          <option value="attempts">Most attempts</option>
+        </select>
+        <label style="margin:0;text-transform:none;letter-spacing:0;color:var(--text);font-size:13px">
+          <input type="checkbox" id="fMine" style="width:auto"> Only mine
+        </label>
+        <div class="spacer"></div>
+        <span class="small muted" id="resultCount"></span>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <div class="table-scroll">
+        <table>
+          <thead><tr>
+            <th>Business</th><th>Stage</th><th>Phone</th><th>Revenue / mo</th>
+            <th>Wants</th><th>Positions</th><th>Owner</th><th>Last touch</th><th></th>
+          </tr></thead>
+          <tbody id="leadRows"><tr><td colspan="9" class="muted">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="row mt">
+        <button id="btnMore" class="small hidden">Load more</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIPELINE -->
+  <section data-panel="pipeline" class="hidden">
+    <div class="card">
+      <h2>Pipeline</h2>
+      <div class="board" id="board"></div>
+    </div>
+    <div class="card mt">
+      <h2>Open deals by stage</h2>
+      <div id="stageLists" class="small muted">Loading...</div>
+    </div>
+  </section>
+
+  <!-- AI NOTES -->
+  <section data-panel="notes" class="hidden">
+    <div class="card">
+      <h2>Recent AI notes</h2>
+      <p class="small muted" id="aiStatus"></p>
+      <div id="noteFeed" class="mt">Loading...</div>
+    </div>
+  </section>
+</div>
+
+<div id="drawerHost"></div>
+<div id="modalHost"></div>
+<div id="toasts"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/texting.js"></script>
+<script src="/js/crm.js"></script>
+</body>
+</html>

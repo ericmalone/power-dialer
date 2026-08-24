@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dialer Admin</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%99%EF%B8%8F</text></svg>" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span> Dialer Admin</div>
+  <a href="/" class="small">Agent console</a>
+  <a href="/crm" class="small">Merchants</a>
+  <a href="/reports" class="small">Reports</a>
+  <span class="muted small" id="whoami"></span>
+  <button class="btn-ghost" id="logout">Sign out</button>
+</div>
+
+<div class="wrap">
+  <div id="setupWarnings"></div>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="dash" class="on">Dashboard</button>
+    <button data-tab="lists">Call lists</button>
+    <button data-tab="people">People</button>
+    <button data-tab="numbers">Numbers</button>
+    <button data-tab="texting">Texting</button>
+    <button data-tab="dnc">Do Not Call</button>
+    <button data-tab="settings">Settings</button>
+    <button data-tab="reports">Reports</button>
+    <button data-tab="activity">Activity log</button>
+    <button data-tab="system">System check</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section data-panel="dash">
+    <div class="stats" style="grid-template-columns:repeat(5,1fr)">
+      <div class="stat"><div class="n" id="kCalls">0</div><div class="l">Dials today</div></div>
+      <div class="stat"><div class="n" id="kConnects">0</div><div class="l">Connects today</div></div>
+      <div class="stat"><div class="n" id="kAbandon">0%</div><div class="l">Abandon rate</div></div>
+      <div class="stat"><div class="n" id="kTalk">0:00</div><div class="l">Talk time</div></div>
+      <div class="stat"><div class="n" id="kLeads">0</div><div class="l">Leads remaining</div></div>
+    </div>
+
+    <div class="card mt">
+      <h2>Who is dialing right now</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Agent</th><th>Status</th><th>Lines</th><th>On call with</th><th>Dials</th><th>Connects</th><th>Abandons</th></tr></thead>
+          <tbody id="stationRows"><tr><td colspan="7" class="muted">Nobody is signed in yet.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h2>Twilio wiring</h2>
+      <p class="small">Set your TwiML App's <b>Voice Request URL</b> to:</p>
+      <input id="twimlUrl" readonly />
+      <p class="small mt">And each SMS-capable number's <b>"A message comes in"</b> webhook to:</p>
+      <input id="smsInboundUrl" readonly />
+      <p class="small muted mt">Method: HTTP POST for both. Everything else is handled automatically.</p>
+    </div>
+  </section>
+
+  <!-- LISTS -->
+  <section data-panel="lists" class="hidden">
+    <div class="card">
+      <h2>Upload a spreadsheet</h2>
+      <input type="file" id="listFile" accept=".csv,.xlsx,.xls,.tsv" />
+      <p class="small muted mt">CSV or Excel. We will show you the columns we found before anything is imported.</p>
+      <div id="uploadResult" class="mt"></div>
+    </div>
+
+    <div class="card mt">
+      <h2>Call lists</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Name</th><th>Leads</th><th>Remaining</th><th>Assigned to</th><th>Recording</th><th></th></tr></thead>
+          <tbody id="listRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PEOPLE -->
+  <section data-panel="people" class="hidden">
+    <div id="pendingBox"></div>
+
+    <div class="card">
+      <h2>Add an employee</h2>
+      <p class="small muted" id="signupNote"></p>
+      <div class="grid cols-2">
+        <div>
+          <label>Name</label><input id="uName" />
+          <label>Email</label><input id="uEmail" type="email" />
+        </div>
+        <div>
+          <label>Password (leave blank to email them an invite)</label><input id="uPass" type="text" placeholder="They pick their own" />
+          <label>Max lines they may dial</label><input id="uLines" type="number" min="1" max="5" value="3" />
+        </div>
+      </div>
+      <div class="row mt">
+        <label style="margin:0"><input type="checkbox" id="uAdmin" style="width:auto" /> Make them an administrator</label>
+        <div class="spacer"></div>
+        <button class="btn-primary" id="addUser">Add employee</button>
+      </div>
+      <div id="inviteResult" class="mt"></div>
+    </div>
+
+    <div class="card mt">
+      <h2>Team</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Max lines</th><th>Status</th><th>Last signed in</th><th></th></tr></thead>
+          <tbody id="userRows"></tbody>
+        </table>
+      </div>
+      <p class="small muted mt">Click a row to see what that person has been doing.</p>
+    </div>
+  </section>
+
+  <!-- ACTIVITY LOG -->
+  <section data-panel="activity" class="hidden">
+    <div class="card">
+      <h2>Who did what</h2>
+      <div class="row">
+        <select id="auditActor" style="max-width:220px"></select>
+        <select id="auditAction" style="max-width:240px"></select>
+        <button id="auditRefresh">Refresh</button>
+        <div class="spacer"></div>
+        <span class="small muted">Sign-ins, account changes, list imports, Do Not Call edits, settings and downloads.</span>
+      </div>
+      <div class="table-scroll mt">
+        <table>
+          <thead><tr><th>When</th><th>Who</th><th>Did what</th><th>To what</th><th>Detail</th><th>From</th></tr></thead>
+          <tbody id="auditRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SYSTEM CHECK -->
+  <section data-panel="system" class="hidden">
+    <div class="card">
+      <div class="row">
+        <div>
+          <h2 style="margin:0">Twilio setup</h2>
+          <p class="small muted" style="margin:4px 0 0">
+            Creates the API key and TwiML app if they are missing, and points Twilio at this deployment.
+            Run it after any change to your web address.
+          </p>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn-primary" id="btnProvision">Run Twilio setup</button>
+      </div>
+      <div id="provisionResults" class="mt"></div>
+    </div>
+
+    <div class="card mt">
+      <div class="row">
+        <div>
+          <h2 style="margin:0">Is everything connected?</h2>
+          <p class="small muted" style="margin:4px 0 0">
+            This actually calls Twilio, the AI model and your email provider. A key that is set but wrong shows up here.
+          </p>
+        </div>
+        <div class="spacer"></div>
+        <span id="healthOverall"></span>
+        <button class="btn-primary" id="btnHealth">Run the check</button>
+      </div>
+      <div id="healthResults" class="mt"><p class="small muted">Press "Run the check" - it takes a few seconds.</p></div>
+    </div>
+
+    <div class="card mt">
+      <h2>What to paste into Twilio</h2>
+      <p class="small">TwiML App &rarr; Voice Request URL (HTTP POST):</p>
+      <input id="twimlUrl2" readonly onclick="this.select()" />
+      <p class="small mt">Each texting number &rarr; "A message comes in" (HTTP POST):</p>
+      <input id="smsInboundUrl2" readonly onclick="this.select()" />
+    </div>
+  </section>
+
+  <!-- NUMBERS -->
+  <section data-panel="numbers" class="hidden">
+    <div class="card">
+      <h2>Caller ID numbers</h2>
+      <div class="row">
+        <input id="numPhone" placeholder="+15551234567" style="max-width:240px" />
+        <input id="numLabel" placeholder="Label (optional)" style="max-width:240px" />
+        <button class="btn-primary" id="addNumber">Add</button>
+        <div class="spacer"></div>
+        <button id="syncNumbers">Import all numbers from Twilio</button>
+      </div>
+      <div class="table-scroll mt">
+        <table>
+          <thead><tr><th>Number</th><th>Where it looks local</th><th>Label</th><th>Calls</th><th>Texts</th><th>Times used</th><th></th></tr></thead>
+          <tbody id="numberRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <div class="row">
+        <div>
+          <h2 style="margin:0">Local presence</h2>
+          <p class="small muted" style="margin:4px 0 0">
+            People answer a number that looks like their neighbour. This is how much of your book you can ring from one.
+          </p>
+        </div>
+        <div class="spacer"></div>
+        <select id="covStrategy" style="max-width:340px"></select>
+        <select id="covList" style="max-width:200px"></select>
+      </div>
+
+      <div class="stats mt" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat"><div class="n" id="covExact">-</div><div class="l">Same area code</div></div>
+        <div class="stat"><div class="n" id="covState">-</div><div class="l">Same state only</div></div>
+        <div class="stat"><div class="n" id="covZone">-</div><div class="l">Same timezone only</div></div>
+        <div class="stat"><div class="n" id="covNone">-</div><div class="l">No local match</div></div>
+      </div>
+
+      <h2 class="mt">Where a number would earn its keep</h2>
+      <p class="small muted" style="margin:0 0 12px">
+        The area codes in your lists you cannot ring locally, biggest first. A number costs about $1.15 a month.
+      </p>
+      <div class="bar-rows" id="covGaps"></div>
+    </div>
+  </section>
+
+  <!-- TEXTING -->
+  <section data-panel="texting" class="hidden">
+    <div id="smsAdvisories"></div>
+
+    <div class="stats" style="grid-template-columns:repeat(6,1fr)">
+      <div class="stat"><div class="n" id="tSent">0</div><div class="l">Sent today</div></div>
+      <div class="stat"><div class="n" id="tRecv">0</div><div class="l">Replies today</div></div>
+      <div class="stat"><div class="n" id="tQueued">0</div><div class="l">Waiting to send</div></div>
+      <div class="stat"><div class="n" id="tFailed">0</div><div class="l">Failed</div></div>
+      <div class="stat"><div class="n" id="tBlocked">0</div><div class="l">Blocked</div></div>
+      <div class="stat"><div class="n" id="tOptOuts">0</div><div class="l">Opted out</div></div>
+    </div>
+
+    <div class="card mt">
+      <h2>Sending number</h2>
+      <div class="row">
+        <select id="smsFrom" style="max-width:260px"></select>
+        <button class="btn-primary" id="saveSmsFrom">Save</button>
+        <div class="spacer"></div>
+        <span class="small muted" id="msgServiceNote"></span>
+      </div>
+      <p class="small muted mt">
+        Mark which of your numbers can send texts under <b>Numbers</b>. A lead's whole thread
+        stays on whichever number texted them first.
+      </p>
+    </div>
+
+    <div class="card mt">
+      <h2>Auto-texts across the team</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Owner</th><th>When</th><th>Template</th><th>Delay</th><th>List</th><th>On</th></tr></thead>
+          <tbody id="smsRuleRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h2>Templates</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Name</th><th>Owner</th><th>Message</th></tr></thead>
+          <tbody id="smsTplRows"></tbody>
+        </table>
+      </div>
+      <div class="row mt">
+        <input id="stName" placeholder="Shared template name" style="max-width:240px" />
+        <input id="stBody" placeholder="Message with {{first_name}} merge fields" />
+        <button class="btn-primary" id="stAdd">Add shared template</button>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h2>Message log</h2>
+      <div class="row">
+        <select id="smsDir" style="max-width:180px">
+          <option value="">Everything</option>
+          <option value="outbound">Outgoing</option>
+          <option value="inbound">Replies</option>
+        </select>
+        <button id="smsLogRefresh">Refresh</button>
+      </div>
+      <div class="table-scroll mt">
+        <table>
+          <thead><tr><th>When</th><th></th><th>Agent</th><th>Person</th><th>Number</th><th>Message</th><th>Status</th></tr></thead>
+          <tbody id="smsLogRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h2>Opted out of texts</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Number</th><th>Keyword</th><th>When</th><th></th></tr></thead>
+          <tbody id="optOutRows"></tbody>
+        </table>
+      </div>
+      <p class="small muted mt">These are also added to the Do Not Call list automatically.</p>
+    </div>
+  </section>
+
+  <!-- DNC -->
+  <section data-panel="dnc" class="hidden">
+    <div class="card">
+      <h2>Do Not Call list</h2>
+      <label>Paste numbers (commas, spaces or new lines)</label>
+      <textarea id="dncInput" rows="4" placeholder="555-123-4567&#10;+15557654321"></textarea>
+      <div class="row mt">
+        <button class="btn-primary" id="addDnc">Add to list</button>
+        <span class="muted small">or upload a file:</span>
+        <input type="file" id="dncFile" accept=".csv,.xlsx,.xls,.txt" style="max-width:280px" />
+        <div class="spacer"></div>
+        <span class="pill" id="dncCount"><span class="dot"></span> 0 numbers</span>
+      </div>
+      <div class="table-scroll mt">
+        <table>
+          <thead><tr><th>Number</th><th>Reason</th><th>Added</th><th></th></tr></thead>
+          <tbody id="dncRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section data-panel="settings" class="hidden">
+    <div class="card">
+      <h2>Dialing behaviour</h2>
+      <p class="small muted" style="margin:0 0 10px">Local caller ID matching lives on the <b>Numbers</b> tab, next to the coverage it affects.</p>
+      <label><input type="checkbox" id="setThrottle" style="width:auto" /> Automatically reduce lines if the abandon rate passes 3%</label>
+      <label><input type="checkbox" id="setVoicemail" style="width:auto" /> Leave a message when we reach voicemail</label>
+      <label><input type="checkbox" id="setLeaderboard" style="width:auto" /> Let employees see the team leaderboard in Reports</label>
+      <label>Voicemail message</label>
+      <textarea id="setVmText" rows="3"></textarea>
+      <label>Forward inbound calls to (optional)</label>
+      <input id="setInbound" placeholder="+15551234567" />
+      <label>Reply sent when someone texts STOP</label>
+      <input id="setOptOutReply" placeholder="You have been unsubscribed..." />
+      <div class="row mt"><button class="btn-primary" id="saveSettings">Save</button></div>
+    </div>
+
+    <div class="card mt">
+      <h2>Set in your .env file</h2>
+      <div class="table-scroll"><table id="envRows"></table></div>
+      <p class="small muted mt">Change these on your host, then restart the app.</p>
+    </div>
+
+    <div class="card mt">
+      <h2>Disposition buttons</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Label</th><th>Code</th><th>Type</th><th>Key</th><th></th></tr></thead>
+          <tbody id="dispRows"></tbody>
+        </table>
+      </div>
+      <div class="row mt">
+        <input id="dLabel" placeholder="Label" style="max-width:200px" />
+        <input id="dCode" placeholder="code" style="max-width:140px" />
+        <select id="dKind" style="max-width:150px">
+          <option value="good">good</option>
+          <option value="neutral">neutral</option>
+          <option value="bad">bad</option>
+          <option value="callback">callback</option>
+          <option value="dnc">dnc</option>
+        </select>
+        <input id="dKey" placeholder="hotkey" style="max-width:90px" />
+        <button class="btn-primary" id="addDisp">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORTS -->
+  <section data-panel="reports" class="hidden">
+    <div class="card">
+      <h2>Agent performance (last 7 days)</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Agent</th><th>Dials</th><th>Connects</th><th>Abandons</th><th>Talk time</th><th>Contact rate</th></tr></thead>
+          <tbody id="agentRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card mt">
+      <h2>Recent calls</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>When</th><th>Agent</th><th>Lead</th><th>Number</th><th>Outcome</th><th>Disposition</th><th>Talk</th><th></th></tr></thead>
+          <tbody id="callRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="modalHost"></div>
+<div id="toasts"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

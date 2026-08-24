@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reset your password</title>
+<link rel="stylesheet" href="/css/app.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%93%9E</text></svg>" />
+</head>
+<body>
+<div class="login-shell">
+  <form class="card login-card" id="form">
+    <h1>Forgot your password?</h1>
+    <p class="muted small">Put in your work email and we will send you a link to set a new one.</p>
+
+    <div id="ok" class="banner ok hidden"></div>
+
+    <div id="fields">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required autofocus />
+      <button class="btn-primary mt" type="submit" style="width:100%;padding:12px">Send me a reset link</button>
+    </div>
+
+    <p class="small mt" style="text-align:center"><a href="/login">Back to sign in</a></p>
+  </form>
+</div>
+
+<script>
+document.getElementById('form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
+  const res = await fetch('/forgot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: document.getElementById('email').value }),
+  });
+  const data = await res.json().catch(() => ({}));
+  document.getElementById('fields').classList.add('hidden');
+  const ok = document.getElementById('ok');
+  ok.textContent = data.message || 'If that email belongs to an account, a reset link is on its way.';
+  ok.classList.remove('hidden');
+});
+</script>
+</body>
+</html>

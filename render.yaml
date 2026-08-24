@@ -1,0 +1,87 @@
+# Render.com blueprint - https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: power-dialer
+    runtime: node
+    plan: starter          # 512MB. "free" spins down and will drop live calls.
+    region: oregon
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: true
+    disk:
+      name: dialer-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/data/dialer.db
+      - key: SESSION_SECRET
+        generateValue: true
+      # ---- the only two Twilio values you have to supply ----
+      # The app creates its own API key and TwiML app from these on boot,
+      # adopts your numbers, and points Twilio's webhooks at PUBLIC_URL.
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      # Set this to the URL Render gives you, then let it redeploy.
+      - key: PUBLIC_URL
+        sync: false
+      - key: AUTO_SETUP
+        value: "true"
+      # ---- only if you would rather wire Twilio by hand ----
+      - key: TWILIO_API_KEY_SID
+        sync: false
+      - key: TWILIO_API_KEY_SECRET
+        sync: false
+      - key: TWILIO_TWIML_APP_SID
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CALLER_IDS
+        sync: false
+      - key: TWILIO_MESSAGING_SERVICE_SID
+        sync: false
+      - key: COMPANY_NAME
+        sync: false
+      - key: REPORT_TIMEZONE
+        value: America/New_York
+      - key: MAX_LINES_PER_AGENT
+        value: "5"
+      - key: SMS_ENABLED
+        value: "true"
+      - key: SMS_QUIET_HOURS
+        value: "true"
+      - key: SMS_APPEND_OPT_OUT
+        value: "true"
+      # ---- accounts and email ----
+      - key: SIGNUP_ENABLED
+        value: "true"
+      - key: SIGNUP_ALLOWED_DOMAINS
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: EMAIL_FROM
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      # ---- AI call notes ----
+      - key: AI_NOTES_ENABLED
+        value: "true"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TRANSCRIBE_PROVIDER
+        value: twilio
+      - key: TWILIO_INTELLIGENCE_SERVICE_SID
+        sync: false
+      - key: ENABLE_AMD
+        value: "true"
+      - key: ENFORCE_CALLING_HOURS
+        value: "true"
+      - key: RECORD_CALLS
+        value: "false"
